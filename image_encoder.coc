@@ -1,11 +1,14 @@
 # IMPORTS:
 
-import numpy as np
 import pywt
 
 # CONSTANTS:
 
 WAVELET = "haar"
+ALPHA = .99
+BETA = .01
+
+assert ALPHA > BETA
 
 # UTILITIES:
 
@@ -15,76 +18,57 @@ transform = pywt.dwt2$(wavelet=WAVELET)
 
 inv_transform = pywt.idwt2$(wavelet=WAVELET)
 
-def lsb_0(num):
-    if num % 2 == 0:
-        out = num
-    else:
-        out = num - 1
-    return out |> round |> int
-
-def lsb_1(num, mod=None):
-    if num % 2 == 1:
-        out = num
-    elif mod is None or num + 1 < mod:
-        out = num + 1
-    else:
-        out = num - 2
-    return out |> round |> int
-
 def trans_shape(image):
     return (image.shape[0]+1)//2, (image.shape[1]+1)//2
 
-def encode(image, binary):
-    assert image.ndim == 2
-    shape = trans_shape(image)
-    assert product(shape) == len(binary)
-    approximate, (horizontal, vertical, diagonal) = transform(image)
-    i = 0
-    for x in range(0, shape[0]):
-        for y in range(0, shape[1]):
-            if not binary[i] or binary[i] == "0":
-                horizontal[x, y] |>= lsb_0
-                vertical[x, y] |>= lsb_0
-                diagonal[x, y] |>= lsb_0
-            else:
-                horizontal[x, y] |>= lsb_1
-                vertical[x, y] |>= lsb_1
-                diagonal[x, y] |>= lsb_1
-            i += 1
-    return inv_transform((approximate, (horizontal, vertical, diagonal)))
+def fuse(a, b):
+    out = (a*ALPHA + b*BETA)/(ALPHA + BETA)
+    return out |> round |> int
 
-def decode(image):
-    assert image.ndim == 2
-    shape = trans_shape(image)
-    approximate, (horizontal, vertical, diagonal) = transform(image)
-    binary = []
+def unfuse(a, out):
+    b = (out*(ALPHA + BETA) - a*ALPHA)/BETA
+    return b |> round |> int
+
+def encode(cover_image, secret_image):
+    assert cover_image.ndim == 2
+    assert secret_image.ndim == 2
+    shape1 = trans_shape(cover_image)
+    a1, (h1, v1, d1) = transform(cover_image)
+    shape2 = trans_shape(secret_image)
+    a2, (h2, v2, d2) = transform(secret_image)
+    for x in range(0, shape1[0]):
+        for y in range(0, shape1[1]):
+            if x < shape2[0] and y < shape2[1]:
+                a1[x, y] |>= fuse$(a2[x,y])
+                h1[x, y] |>= fuse$(h2[x,y])
+                v1[x, y] |>= fuse$(v2[x,y])
+                d1[x, y] |>= fuse$(d2[x,y])
+    return inv_transform((a1, (h1, v1, d1)))
+
+def decode(encoded_image, cover_image):
+    assert encoded_image.ndim == 2
+    assert cover_image.ndim == 2
+    assert encoded_image.shape == cover_image.shape
+    shape = trans_shape(encoded_image)
+    a1, (h1, v1, d1) = transform(encoded_image)
+    a2, (h2, v2, d2) = transform(cover_image)
     for x in range(0, shape[0]):
         for y in range(0, shape[1]):
-            bits = (horizontal[x, y], vertical[x, y], diagonal[x, y]) |> map$((n) -> int(round(n)) % 2) |> list
-            if not any(bits):
-                binary.append(0)
-            elif all(bits):
-                binary.append(1)
-            else:
-                print("LSB values diverge: binary["+str(len(binary))+"] = transform(image)["+str(x)+", "+str(y)+"] = "+repr(bits))
-                if sum(bits) == 1:
-                    binary.append(0)
-                    print("    Assuming: binary["+str(len(binary))+"] = 0")
-                elif sum(bits) == 2:
-                    binary.append(1)
-                    print("    Assuming: binary["+str(len(binary))+"] = 1")
-                else:
-                    raise ValueError("No agreement among LSB values: binary["+str(len(binary))+"] = transform(image)["+str(x)+", "+str(y)+"] = "+repr(bits))
-    return binary
+            a1[x, y] |>= unfuse$(a2[x,y])
+            h1[x, y] |>= unfuse$(h2[x,y])
+            v1[x, y] |>= unfuse$(v2[x,y])
+            d1[x, y] |>= unfuse$(d2[x,y])
+    return inv_transform((a1, (h1, v1, d1)))
 
 # MAIN:
 
 if __name__ == "__main__":
     from skimage import io, \data
-    pre_image = \data.coins()
-    length = product(trans_shape(pre_image))
-    post_image = encode(pre_image, [0]*length)
-    errors = sum(decode(post_image))
-    print("Errors: "+str(errors)+" ("+str(100*errors/length)+"%)")
-    io.imshow(post_image)
+    cover_image = \data.horse()
+    secret_image = \data.coins()
+    io.imshow(cover_image)
+    encoded_image = encode(cover_image, secret_image)
+    io.imshow(encoded_image)
+    retrieved_image = decode(encoded_image, cover_image)
+    io.imshow(retrieved_image)
     io.show()
