@@ -53,6 +53,8 @@ import pywt
 
 # CONSTANTS:
 
+COVER_IMAGE = "iconBW.jpg"
+SECRET_IMAGE = "Copyright.jpg"
 WAVELET = "haar"
 ALPHA = .99
 BETA = 1 - ALPHA
@@ -112,11 +114,11 @@ def decode(encoded_image, cover_image):
 # MAIN:
 
 if __name__ == "__main__":
-    from skimage import io, data
-    secret_image = data.coins()
+    from skimage import io
+    secret_image = io.imread(SECRET_IMAGE, as_grey=True)
     io.imshow(secret_image)
     io.show()
-    cover_image = data.checkerboard()
+    cover_image = io.imread(COVER_IMAGE, as_grey=True)
     io.imshow(cover_image)
     io.show()
     encoded_image = encode(cover_image, secret_image)
