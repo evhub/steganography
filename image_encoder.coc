@@ -5,7 +5,7 @@ import pywt
 # CONSTANTS:
 
 WAVELET = "haar"
-ALPHA = .9
+ALPHA = .99
 BETA = 1-ALPHA
 
 assert ALPHA > BETA
