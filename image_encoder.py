@@ -49,13 +49,15 @@ recursive = __coconut__.recursive
 
 # IMPORTS:
 
+import numpy as np
 import pywt
+import os.path
 
 # CONSTANTS:
 
 COVER_IMAGE = "iconBW.jpg"
 SECRET_IMAGE = "Copyright.jpg"
-ENCODED_IMAGE = COVER_IMAGE.split(".")[0] + "_" + SECRET_IMAGE
+ENCODED_IMAGE = os.path.splitext(COVER_IMAGE)[0] + "_" + SECRET_IMAGE
 WAVELET = "haar"
 ALPHA = .99
 BETA = 1 - ALPHA
@@ -100,16 +102,17 @@ def encode(cover_image, secret_image):
 def decode(encoded_image, cover_image):
     assert encoded_image.ndim == 2
     assert cover_image.ndim == 2
-    assert encoded_image.shape == cover_image.shape
-    shape = trans_shape(encoded_image)
+    shape1 = trans_shape(encoded_image)
     a1, (h1, v1, d1) = transform(encoded_image)
+    shape2 = trans_shape(cover_image)
     a2, (h2, v2, d2) = transform(cover_image)
-    for x in range(0, shape[0]):
-        for y in range(0, shape[1]):
-            a1[x, y] = unfuse(a1[x, y], a2[x, y])
-            h1[x, y] = unfuse(h1[x, y], h2[x, y])
-            v1[x, y] = unfuse(v1[x, y], v2[x, y])
-            d1[x, y] = unfuse(d1[x, y], d2[x, y])
+    for x in range(0, shape1[0]):
+        for y in range(0, shape1[1]):
+            if x < shape2[0] and y < shape2[1]:
+                a1[x, y] = unfuse(a1[x, y], a2[x, y])
+                h1[x, y] = unfuse(h1[x, y], h2[x, y])
+                v1[x, y] = unfuse(v1[x, y], v2[x, y])
+                d1[x, y] = unfuse(d1[x, y], d2[x, y])
     return inv_transform((a1, (h1, v1, d1)))
 
 # MAIN:
@@ -118,14 +121,25 @@ if __name__ == "__main__":
     from skimage import io
     secret_image = io.imread(SECRET_IMAGE, as_grey=True)
     io.imshow(secret_image)
+    print("SECRET IMAGE")
     io.show()
     cover_image = io.imread(COVER_IMAGE, as_grey=True)
     io.imshow(cover_image)
+    print("COVER IMAGE")
     io.show()
     encoded_image = encode(cover_image, secret_image)
-    io.imsave(ENCODED_IMAGE, encoded_image)
     io.imshow(encoded_image)
+    print("ENCODED IMAGE")
     io.show()
-    retrieved_image = decode(encoded_image, cover_image)
+    if os.path.exists(ENCODED_IMAGE):
+        modified_image = io.imread(ENCODED_IMAGE, as_grey=True)
+        io.imshow(modified_image)
+        print("MODIFIED IMAGE")
+        io.show()
+        retrieved_image = decode(modified_image, cover_image)
+    else:
+        io.imsave(ENCODED_IMAGE, encoded_image)
+        retrieved_image = decode(encoded_image, cover_image)
     io.imshow(retrieved_image)
+    print("RETRIEVED IMAGE")
     io.show()
