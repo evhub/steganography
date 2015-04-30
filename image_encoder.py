@@ -55,7 +55,7 @@ import pywt
 
 WAVELET = "haar"
 ALPHA = .99
-BETA = .01
+BETA = 1 - ALPHA
 
 assert ALPHA > BETA
 
@@ -74,7 +74,7 @@ def fuse(a, b):
     out = (a * ALPHA + b * BETA) / (ALPHA + BETA)
     return __coconut__.pipe(out, round, int)
 
-def unfuse(a, out):
+def unfuse(out, a):
     b = (out * (ALPHA + BETA) - a * ALPHA) / BETA
     return __coconut__.pipe(b, round, int)
 
@@ -88,10 +88,10 @@ def encode(cover_image, secret_image):
     for x in range(0, shape1[0]):
         for y in range(0, shape1[1]):
             if x < shape2[0] and y < shape2[1]:
-                a1[x, y] = __coconut__.pipe(a1[x, y], (__coconut__.partial(fuse, a2[x, y])))
-                h1[x, y] = __coconut__.pipe(h1[x, y], (__coconut__.partial(fuse, h2[x, y])))
-                v1[x, y] = __coconut__.pipe(v1[x, y], (__coconut__.partial(fuse, v2[x, y])))
-                d1[x, y] = __coconut__.pipe(d1[x, y], (__coconut__.partial(fuse, d2[x, y])))
+                a1[x, y] = fuse(a1[x, y], a2[x, y])
+                h1[x, y] = fuse(h1[x, y], h2[x, y])
+                v1[x, y] = fuse(v1[x, y], v2[x, y])
+                d1[x, y] = fuse(d1[x, y], d2[x, y])
     return inv_transform((a1, (h1, v1, d1)))
 
 def decode(encoded_image, cover_image):
@@ -103,21 +103,23 @@ def decode(encoded_image, cover_image):
     a2, (h2, v2, d2) = transform(cover_image)
     for x in range(0, shape[0]):
         for y in range(0, shape[1]):
-            a1[x, y] = __coconut__.pipe(a1[x, y], (__coconut__.partial(unfuse, a2[x, y])))
-            h1[x, y] = __coconut__.pipe(h1[x, y], (__coconut__.partial(unfuse, h2[x, y])))
-            v1[x, y] = __coconut__.pipe(v1[x, y], (__coconut__.partial(unfuse, v2[x, y])))
-            d1[x, y] = __coconut__.pipe(d1[x, y], (__coconut__.partial(unfuse, d2[x, y])))
+            a1[x, y] = unfuse(a1[x, y], a2[x, y])
+            h1[x, y] = unfuse(h1[x, y], h2[x, y])
+            v1[x, y] = unfuse(v1[x, y], v2[x, y])
+            d1[x, y] = unfuse(d1[x, y], d2[x, y])
     return inv_transform((a1, (h1, v1, d1)))
 
 # MAIN:
 
 if __name__ == "__main__":
     from skimage import io, data
-    cover_image = data.horse()
+    cover_image = data.checkerboard()
     secret_image = data.coins()
     io.imshow(cover_image)
+    io.show()
     encoded_image = encode(cover_image, secret_image)
     io.imshow(encoded_image)
+    io.show()
     retrieved_image = decode(encoded_image, cover_image)
     io.imshow(retrieved_image)
     io.show()
