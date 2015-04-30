@@ -6,6 +6,7 @@ import pywt
 
 COVER_IMAGE = "iconBW.jpg"
 SECRET_IMAGE = "Copyright.jpg"
+ENCODED_IMAGE = COVER_IMAGE.split(".")[0]+"_"+SECRET_IMAGE
 WAVELET = "haar"
 ALPHA = .99
 BETA = 1-ALPHA
@@ -73,6 +74,7 @@ if __name__ == "__main__":
     io.imshow(cover_image)
     io.show()
     encoded_image = encode(cover_image, secret_image)
+    io.imsave(ENCODED_IMAGE, encoded_image)
     io.imshow(encoded_image)
     io.show()
     retrieved_image = decode(encoded_image, cover_image)
