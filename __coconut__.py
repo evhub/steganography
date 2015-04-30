@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Compiled with Coconut version 0.2.1-dev [Fiji]
+# Compiled with Coconut version 0.2.1 [Fiji]
 
 # Coconut Header: --------------------------------------------------------------
 

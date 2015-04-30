@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Compiled with Coconut version 0.2.1-dev [Fiji]
+# Compiled with Coconut version 0.2.1 [Fiji]
 
 # Coconut Header: --------------------------------------------------------------
 
@@ -72,11 +72,11 @@ def trans_shape(image):
 
 def fuse(a, b):
     out = (a * ALPHA + b * BETA) / (ALPHA + BETA)
-    return __coconut__.pipe(out, round, int)
+    return out
 
 def unfuse(out, a):
     b = (out * (ALPHA + BETA) - a * ALPHA) / BETA
-    return __coconut__.pipe(b, round, int)
+    return b
 
 def encode(cover_image, secret_image):
     assert cover_image.ndim == 2
@@ -113,8 +113,10 @@ def decode(encoded_image, cover_image):
 
 if __name__ == "__main__":
     from skimage import io, data
-    cover_image = data.checkerboard()
     secret_image = data.coins()
+    io.imshow(secret_image)
+    io.show()
+    cover_image = data.checkerboard()
     io.imshow(cover_image)
     io.show()
     encoded_image = encode(cover_image, secret_image)
