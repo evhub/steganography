@@ -55,9 +55,8 @@ import os.path
 
 # CONSTANTS:
 
-COVER_IMAGE = "iconBW.jpg"
-SECRET_IMAGE = "Copyright.jpg"
-ENCODED_IMAGE = os.path.splitext(COVER_IMAGE)[0] + "_" + SECRET_IMAGE
+COVER_IMAGE = "iconBW.png"
+SECRET_IMAGE = "Copyright.png"
 WAVELET = "haar"
 ALPHA = .99
 BETA = 1 - ALPHA
@@ -131,15 +130,7 @@ if __name__ == "__main__":
     io.imshow(encoded_image)
     print("ENCODED IMAGE")
     io.show()
-    if os.path.exists(ENCODED_IMAGE):
-        modified_image = io.imread(ENCODED_IMAGE, as_grey=True)
-        io.imshow(modified_image)
-        print("MODIFIED IMAGE")
-        io.show()
-        retrieved_image = decode(modified_image, cover_image)
-    else:
-        io.imsave(ENCODED_IMAGE, encoded_image)
-        retrieved_image = decode(encoded_image, cover_image)
+    retrieved_image = decode(encoded_image, cover_image)
     io.imshow(retrieved_image)
     print("RETRIEVED IMAGE")
     io.show()
