@@ -22,16 +22,11 @@ transform = pywt.dwt2$(wavelet=WAVELET)
 
 inv_transform = pywt.idwt2$(wavelet=WAVELET)
 
-def trans_shape(image):
-    return (image.shape[0]+1)//2, (image.shape[1]+1)//2
+def trans_shape(image) = (image.shape[0]+1)//2, (image.shape[1]+1)//2
 
-def fuse(a, b):
-    out = (a*ALPHA + b*BETA)/(ALPHA + BETA)
-    return out
+def fuse(a, b) = (a*ALPHA + b*BETA)/(ALPHA + BETA)
 
-def unfuse(out, a):
-    b = (out*(ALPHA + BETA) - a*ALPHA)/BETA
-    return b
+def unfuse(out, a) = (out*(ALPHA + BETA) - a*ALPHA)/BETA
 
 def encode(cover_image, secret_image):
     assert cover_image.ndim == 2

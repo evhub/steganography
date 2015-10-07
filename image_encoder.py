@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 
-# Compiled with Coconut version 0.2.1 [Fiji]
+# Compiled with Coconut version 0.3.1-dev [Ilocos]
 
 # Coconut Header: --------------------------------------------------------------
 
@@ -14,36 +15,41 @@ else:
 try: ascii
 except NameError: ascii = repr
 try: unichr
-except NameError: unichr = chr
+except NameError: pass
+else:
+    py2_chr = chr
+    chr = unichr
+_coconut_encoding = "UTF-8"
 try: unicode
 except NameError: pass
 else:
     bytes, str = str, unicode
-    _coconut_print = print
+    py2_print = print
     def print(*args, **kwargs):
-        """Wraps _coconut_print."""
-        return _coconut_print(*(str(x).encode("utf8") for x in args), **kwargs)
+        """Wraps py2_print."""
+        return py2_print(*(str(x).encode(_coconut_encoding) for x in args), **kwargs)
 try: raw_input
 except NameError: pass
 else:
-    _coconut_input = raw_input
+    py2_input = raw_input
     def input(*args, **kwargs):
-        """Wraps _coconut_input."""
-        return _coconut_input(*args, **kwargs).decode("utf8")
+        """Wraps py2_input."""
+        return py2_input(*args, **kwargs).decode(_coconut_encoding)
 
 import sys as _coconut_sys
 import os.path as _coconut_os_path
 _coconut_sys.path.append(_coconut_os_path.dirname(_coconut_os_path.abspath(__file__)))
 import __coconut__
 
-reduce = __coconut__.reduce
-itemgetter = __coconut__.itemgetter
-attrgetter = __coconut__.attrgetter
-methodcaller = __coconut__.methodcaller
-takewhile = __coconut__.takewhile
-dropwhile = __coconut__.dropwhile
-tee = __coconut__.tee
+reduce = __coconut__.functools.reduce
+itemgetter = __coconut__.operator.itemgetter
+attrgetter = __coconut__.operator.attrgetter
+methodcaller = __coconut__.operator.methodcaller
+takewhile = __coconut__.itertools.takewhile
+dropwhile = __coconut__.itertools.dropwhile
+tee = __coconut__.itertools.tee
 recursive = __coconut__.recursive
+MatchError = __coconut__.MatchError
 
 # Compiled Coconut: ------------------------------------------------------------
 
@@ -65,22 +71,17 @@ assert ALPHA > BETA
 
 # UTILITIES:
 
-product = __coconut__.partial(reduce, (__coconut__.operator.__mul__))
+product = __coconut__.functools.partial(reduce, __coconut__.operator.__mul__)
 
-transform = __coconut__.partial(pywt.dwt2, wavelet=WAVELET)
+transform = __coconut__.functools.partial(pywt.dwt2, wavelet=WAVELET)
 
-inv_transform = __coconut__.partial(pywt.idwt2, wavelet=WAVELET)
+inv_transform = __coconut__.functools.partial(pywt.idwt2, wavelet=WAVELET)
 
-def trans_shape(image):
-    return (image.shape[0] + 1) // 2, (image.shape[1] + 1) // 2
+def trans_shape(image): return (image.shape[0] + 1) // 2, (image.shape[1] + 1) // 2
 
-def fuse(a, b):
-    out = (a * ALPHA + b * BETA) / (ALPHA + BETA)
-    return out
+def fuse(a, b): return (a * ALPHA + b * BETA) / (ALPHA + BETA)
 
-def unfuse(out, a):
-    b = (out * (ALPHA + BETA) - a * ALPHA) / BETA
-    return b
+def unfuse(out, a): return (out * (ALPHA + BETA) - a * ALPHA) / BETA
 
 def encode(cover_image, secret_image):
     assert cover_image.ndim == 2
